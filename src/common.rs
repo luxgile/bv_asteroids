@@ -1,10 +1,21 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 pub fn plugin(app: &mut App) {
     app.register_type::<Lifetime>();
     app.add_systems(Update, process_lifetimes);
+}
+
+#[derive(Bundle, Default)]
+pub struct PhysicsBundle {
+    pub rigidbody: RigidBody,
+    pub collider: Collider,
+    pub gravity: GravityScale,
+    pub velocity: Velocity,
+    pub restitution: Restitution,
+    pub damping: Damping,
 }
 
 #[derive(Component, Default, Reflect)]

@@ -1,4 +1,5 @@
-pub mod common;
+mod common;
+mod projectiles;
 use common::*;
 
 use bevy::{
@@ -21,29 +22,6 @@ struct Shooter {
     shoot_delay: f32,
 }
 
-#[derive(Component, Default)]
-struct Projectile {
-    damage: f32,
-}
-
-#[derive(Bundle, Default)]
-struct PhysicsBundle {
-    rigidbody: RigidBody,
-    collider: Collider,
-    gravity: GravityScale,
-    velocity: Velocity,
-    restitution: Restitution,
-    damping: Damping,
-}
-
-#[derive(Bundle, Default)]
-struct ProjectileBundle<M: Material2d> {
-    projectile: Projectile,
-    mesh: MaterialMesh2dBundle<M>,
-    lifetime: Lifetime,
-    physics: PhysicsBundle,
-}
-
 fn main() {
     let mut app = App::new();
     app.add_plugins((
@@ -58,6 +36,7 @@ fn main() {
         Wireframe2dPlugin,
         RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
         common::plugin,
+        projectiles::plugin,
         // RapierDebugRenderPlugin::default(),
     ));
     app.add_systems(Startup, setup);
@@ -68,7 +47,6 @@ fn main() {
             player_look_at_mouse,
             player_input_shooting,
             shooter_fire,
-            resolve_projectile_collision,
         ),
     );
     app.run();
@@ -193,49 +171,15 @@ fn shooter_fire(
 
             let radius = 10.0;
             let spawn_velocity = (transform.up().as_vec3() * 2000.0).xy();
-            let spawn_position = transform.translation() + transform.up().as_vec3() * 75.0;
-
-            cmds.spawn(ProjectileBundle {
-                projectile: Projectile { damage: 10.0 },
-                lifetime: Lifetime::new(3.0),
-                mesh: MaterialMesh2dBundle {
-                    mesh: Mesh2dHandle(meshes.add(Circle::new(radius))),
-                    material: materials.add(Color::linear_rgb(1.0, 1.0, 1.0)),
-                    transform: Transform::from_translation(spawn_position),
-                    ..default()
-                },
-                physics: PhysicsBundle {
-                    rigidbody: RigidBody::Dynamic,
-                    collider: Collider::ball(radius),
-                    gravity: GravityScale(0.0),
-                    velocity: Velocity {
-                        linvel: spawn_velocity,
-                        ..default()
-                    },
-                    restitution: Restitution::coefficient(0.7),
-                    ..default()
-                },
-            })
-            .insert(Sensor)
-            .insert(ActiveEvents::COLLISION_EVENTS);
-        }
-    }
-}
-
-fn resolve_projectile_collision(
-    mut cmds: Commands,
-    mut collision_events: EventReader<CollisionEvent>,
-    q_projectiles: Query<&Projectile>,
-) {
-    for event in collision_events.read() {
-        if let CollisionEvent::Started(e1, e2, _) = event {
-            println!("{:?}", event);
-            let projectile = q_projectiles.get(*e1).or(q_projectiles.get(*e2));
-            if projectile.is_ok() {
-                println!("HIT!");
-                cmds.entity(*e1).despawn();
-                cmds.entity(*e2).despawn();
-            }
+            let spawn_position = (transform.translation() + transform.up().as_vec3() * 75.0).xy();
+            let projectile = projectiles::ProjectileBundle::normal_projectile(
+                &mut meshes,
+                &mut materials,
+                radius,
+                spawn_position,
+                spawn_velocity,
+            );
+            cmds.spawn(projectile);
         }
     }
 }
