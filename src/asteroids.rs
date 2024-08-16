@@ -1,8 +1,12 @@
+use std::time::Duration;
+
 use bevy::{
     prelude::*,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
 use bevy_rapier2d::prelude::*;
+use bevy_tweening::*;
+use lens::ColorMaterialColorLens;
 
 use crate::common::*;
 
@@ -53,6 +57,18 @@ fn on_asteroid_hit(
     // println!("Hit asteroid: {:?}", e_hit.entity());
     if let Ok(mut asteroid) = q_asteroids.get_mut(e_hit.entity()) {
         asteroid.health -= 1;
+
+        let tween = Tween::new(
+            EaseFunction::SineInOut,
+            Duration::from_secs_f32(0.5),
+            ColorMaterialColorLens {
+                start: Color::linear_rgb(1.0, 1.0, 1.0),
+                end: Color::linear_rgb(1.0, 0.0, 0.0),
+            },
+        );
+        cmds.entity(e_hit.entity())
+            .insert(AssetAnimator::new(tween));
+
         if asteroid.health == 0 {
             cmds.entity(e_hit.entity()).despawn();
         }
