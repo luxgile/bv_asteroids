@@ -1,6 +1,6 @@
 use bevy::{
     prelude::*,
-    sprite::{Material2d, MaterialMesh2dBundle, Mesh2dHandle},
+    sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
 use bevy_rapier2d::prelude::*;
 
