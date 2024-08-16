@@ -33,6 +33,7 @@ fn main() {
         common::plugin,
         player::plugin,
         shooter::plugin,
+        asteroids::plugin,
         projectiles::plugin,
         scenes::plugin,
     ));

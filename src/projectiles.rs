@@ -67,11 +67,11 @@ fn resolve_projectile_collision(
 ) {
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
-            println!("{:?}", event);
-            let projectile = q_projectiles.get(*e1).or(q_projectiles.get(*e2));
-            if projectile.is_ok() {
-                println!("HIT!");
+            if q_projectiles.get(*e1).is_ok() {
+                cmds.trigger_targets(OnHitEnter, *e2);
                 cmds.entity(*e1).despawn();
+            } else if q_projectiles.get(*e2).is_ok() {
+                cmds.trigger_targets(OnHitEnter, *e1);
                 cmds.entity(*e2).despawn();
             }
         }

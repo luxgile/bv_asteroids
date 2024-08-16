@@ -6,6 +6,8 @@ use bevy_rapier2d::prelude::*;
 pub fn plugin(app: &mut App) {
     app.register_type::<Lifetime>();
     app.add_systems(Update, process_lifetimes);
+    app.add_event::<OnCollisionEnter>();
+    app.add_event::<OnHitEnter>();
 }
 
 #[derive(Bundle, Default)]
@@ -17,6 +19,12 @@ pub struct PhysicsBundle {
     pub restitution: Restitution,
     pub damping: Damping,
 }
+
+#[derive(Event)]
+pub struct OnCollisionEnter;
+
+#[derive(Event)]
+pub struct OnHitEnter;
 
 #[derive(Component, Default, Reflect)]
 pub struct Lifetime(Timer);
