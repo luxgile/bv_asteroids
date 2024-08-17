@@ -3,6 +3,8 @@ use std::time::Duration;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+use rand::{prelude::*, Rng};
+
 pub fn plugin(app: &mut App) {
     app.register_type::<Lifetime>();
     app.add_systems(Update, process_lifetimes);
@@ -24,7 +26,22 @@ pub struct PhysicsBundle {
 pub struct OnCollisionEnter;
 
 #[derive(Event)]
-pub struct OnHitEnter;
+pub struct OnHitEnter(pub HitData);
+
+pub struct HitData {
+    pub point: Vec3,
+    pub dir: Dir3,
+    pub dealer: Entity,
+    pub damage: f32,
+}
+impl Default for HitData {
+    fn default() -> Self {
+        Self {
+            dealer: Entity::PLACEHOLDER,
+            ..default()
+        }
+    }
+}
 
 #[derive(Component, Default, Reflect)]
 pub struct Lifetime(Timer);
@@ -44,5 +61,31 @@ fn process_lifetimes(
         if lifetime.0.finished() {
             cmds.entity(entity).despawn();
         }
+    }
+}
+
+pub trait RngSampler {
+    fn value(&mut self) -> f32;
+    fn value_one(&mut self) -> f32 {
+        (self.value() - 0.5) * 2.0
+    }
+    fn value_range(&mut self, min: f32, max: f32) -> f32 {
+        min + (max - min) * self.value()
+    }
+    fn circle(&mut self) -> Vec2 {
+        Vec2::new(self.value_one(), self.value_one()).normalize()
+    }
+    fn sphere(&mut self) -> Vec3 {
+        Vec3::new(self.value_one(), self.value_one(), self.value_one()).normalize()
+    }
+}
+
+#[derive(Default)]
+pub struct SimpleRng {
+    rng: ThreadRng,
+}
+impl RngSampler for SimpleRng {
+    fn value(&mut self) -> f32 {
+        self.rng.gen()
     }
 }

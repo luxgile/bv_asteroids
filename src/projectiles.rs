@@ -35,7 +35,7 @@ impl ProjectileBundle {
         velocity: Vec2,
     ) -> Self {
         Self {
-            projectile: Projectile { damage: 10.0 },
+            projectile: Projectile { damage: 1.0 },
             lifetime: Lifetime::new(3.0),
             mesh: MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Circle::new(radius))),
@@ -63,17 +63,32 @@ impl ProjectileBundle {
 fn resolve_projectile_collision(
     mut cmds: Commands,
     mut collision_events: EventReader<CollisionEvent>,
-    q_projectiles: Query<&Projectile>,
+    q_projectiles: Query<(&Projectile, &GlobalTransform)>,
 ) {
     for event in collision_events.read() {
         if let CollisionEvent::Started(e1, e2, _) = event {
-            if q_projectiles.get(*e1).is_ok() {
-                cmds.trigger_targets(OnHitEnter, *e2);
-                cmds.entity(*e1).despawn();
-            } else if q_projectiles.get(*e2).is_ok() {
-                cmds.trigger_targets(OnHitEnter, *e1);
-                cmds.entity(*e2).despawn();
+            if let Ok((proj, xform)) = q_projectiles.get(*e1) {
+                hit_entity(&mut cmds, proj, xform, *e1, *e2);
+            } else if let Ok((proj, xform)) = q_projectiles.get(*e2) {
+                hit_entity(&mut cmds, proj, xform, *e2, *e1);
             }
         }
     }
+}
+
+fn hit_entity(
+    mut cmds: &mut Commands,
+    projectile: &Projectile,
+    xform: &GlobalTransform,
+    entity_source: Entity,
+    entity_target: Entity,
+) {
+    let hit = HitData {
+        damage: projectile.damage,
+        point: xform.translation(),
+        dir: xform.up(),
+        dealer: entity_source,
+    };
+    cmds.trigger_targets(OnHitEnter(hit), entity_target);
+    cmds.entity(entity_source).despawn();
 }

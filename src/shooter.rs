@@ -22,12 +22,8 @@ fn shooter_fire(
     mut q_shooters: Query<(&GlobalTransform, &mut Shooter)>,
 ) {
     for (transform, mut shooter) in q_shooters.iter_mut() {
-        if !shooter.enabled {
-            return;
-        }
-
         shooter.shoot_timer += time.delta_seconds();
-        while shooter.shoot_timer >= shooter.shoot_delay {
+        while shooter.enabled && shooter.shoot_timer >= shooter.shoot_delay {
             shooter.shoot_timer -= shooter.shoot_delay;
 
             let radius = 10.0;

@@ -1,8 +1,7 @@
 use crate::*;
 use bevy::prelude::*;
 use camera::PlayerCameraBundle;
-use player::Player;
-use shooter::Shooter;
+use common::*;
 
 pub fn plugin(app: &mut App) {
     app.register_type::<GameStates>();
@@ -31,7 +30,9 @@ fn ingame_setup(
     let player = player::PlayerBundle::new(&mut meshes, &mut materials);
     cmds.spawn(player);
 
-    let mut asteroid = asteroids::AsteroidBundle::new(&mut meshes, &mut materials);
+    let mut rng = SimpleRng::default();
+    let mut asteroid = asteroids::AsteroidBundle::new(&mut meshes, &mut materials, 200.0, 2);
     asteroid.mesh.transform.translation = Vec3::new(750.0, 450.0, 0.0);
+    asteroid.physics.velocity.linvel = rng.circle() * rng.value_range(100.0, 500.0);
     cmds.spawn(asteroid);
 }
