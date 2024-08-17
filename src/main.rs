@@ -1,4 +1,5 @@
 mod asteroids;
+mod camera;
 mod common;
 mod player;
 mod projectiles;
@@ -33,6 +34,7 @@ fn main() {
         bevy_tweening::TweeningPlugin,
         common::plugin,
         player::plugin,
+        camera::plugin,
         shooter::plugin,
         asteroids::plugin,
         projectiles::plugin,

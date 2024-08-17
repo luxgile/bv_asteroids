@@ -1,5 +1,6 @@
 use crate::*;
 use bevy::prelude::*;
+use camera::PlayerCameraBundle;
 use player::Player;
 use shooter::Shooter;
 
@@ -23,9 +24,9 @@ fn ingame_setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let mut camera = Camera2dBundle::default();
-    camera.projection.scale = 5.0;
-    cmds.spawn(camera);
+    let mut player_camera = PlayerCameraBundle::new();
+    player_camera.camera.projection.scale = 5.0;
+    cmds.spawn(player_camera);
 
     let player = player::PlayerBundle::new(&mut meshes, &mut materials);
     cmds.spawn(player);

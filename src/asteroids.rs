@@ -54,13 +54,12 @@ fn on_asteroid_hit(
     mut cmds: Commands,
     mut q_asteroids: Query<&mut Asteroid>,
 ) {
-    // println!("Hit asteroid: {:?}", e_hit.entity());
     if let Ok(mut asteroid) = q_asteroids.get_mut(e_hit.entity()) {
         asteroid.health -= 1;
 
         let tween = Tween::new(
-            EaseFunction::SineInOut,
-            Duration::from_secs_f32(0.5),
+            EaseFunction::ExponentialOut,
+            Duration::from_secs_f32(0.3),
             ColorMaterialColorLens {
                 start: Color::linear_rgb(1.0, 1.0, 1.0),
                 end: Color::linear_rgb(1.0, 0.0, 0.0),
