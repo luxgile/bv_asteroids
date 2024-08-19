@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use bevy::{
+    color::palettes::css::*,
     prelude::*,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
@@ -42,7 +43,7 @@ impl AsteroidBundle {
             },
             mesh: MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Circle::new(radius))),
-                material: materials.add(Color::linear_rgb(1.0, 0.0, 0.0)),
+                material: materials.add(Color::from(BROWN)),
                 transform: Transform::from_xyz(750.0, 450.0, 0.0),
                 ..default()
             },
@@ -50,7 +51,7 @@ impl AsteroidBundle {
                 rigidbody: RigidBody::Dynamic,
                 collider: Collider::ball(radius),
                 gravity: GravityScale(0.0),
-                mass: ColliderMassProperties::Mass(1.0),
+                mass: ColliderMassProperties::Mass(1.0 * depth as f32),
                 ..default()
             },
         }
@@ -60,11 +61,11 @@ impl AsteroidBundle {
 fn on_asteroid_hit(
     e_hit: Trigger<OnHitEnter>,
     mut cmds: Commands,
-    mut q_asteroids: Query<(&mut Asteroid, &GlobalTransform, &Collider)>,
+    mut q_asteroids: Query<(&mut Asteroid, &GlobalTransform, &Collider, &Velocity)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if let Ok((mut asteroid, asteroid_xform, asteroid_collider)) =
+    if let Ok((mut asteroid, asteroid_xform, asteroid_collider, vel)) =
         q_asteroids.get_mut(e_hit.entity())
     {
         let hit = &e_hit.event().0;
@@ -79,7 +80,6 @@ fn on_asteroid_hit(
             },
         );
 
-        println!("{:?}", hit);
         cmds.entity(e_hit.entity())
             .insert(AssetAnimator::new(tween))
             .insert(ExternalImpulse {
@@ -100,11 +100,17 @@ fn on_asteroid_hit(
                 let mut bundle =
                     AsteroidBundle::new(&mut meshes, &mut materials, size / 2.0, depth);
                 bundle.mesh.transform.translation = asteroid_xform.translation() + rng_dir;
+                bundle.physics.velocity.linvel =
+                    Vec2::from_angle(f32::to_radians(-45.0 / (4.0 - asteroid.depth as f32)))
+                        .rotate(vel.linvel);
                 cmds.spawn(bundle);
 
                 let mut bundle =
                     AsteroidBundle::new(&mut meshes, &mut materials, size / 2.0, depth);
                 bundle.mesh.transform.translation = asteroid_xform.translation() - rng_dir;
+                bundle.physics.velocity.linvel =
+                    Vec2::from_angle(f32::to_radians(45.0 / (4.0 - asteroid.depth as f32)))
+                        .rotate(vel.linvel);
                 cmds.spawn(bundle);
             }
         }

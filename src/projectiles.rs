@@ -9,7 +9,15 @@ use crate::common::*;
 
 pub fn plugin(app: &mut App) {
     app.register_type::<Projectile>();
-    app.add_systems(Update, (resolve_projectile_collision, look_at_velocity));
+    app.add_systems(PreUpdate, look_at_velocity);
+    app.add_systems(
+        Update,
+        (
+            resolve_projectile_collision,
+            // debug_projectile_direction,
+            // look_at_velocity,
+        ),
+    );
 }
 
 #[derive(Component, Default, Reflect)]
@@ -81,6 +89,24 @@ fn resolve_projectile_collision(
                 hit_entity(&mut cmds, proj, xform, *e2, *e1);
             }
         }
+    }
+}
+
+fn debug_projectile_direction(
+    q_projectiles: Query<(&Projectile, &Transform, &Velocity)>,
+    mut gizmos: Gizmos,
+) {
+    for (proj, xform, vel) in q_projectiles.iter() {
+        gizmos.arrow_2d(
+            xform.translation.xy(),
+            xform.translation.xy() + vel.linvel.normalize() * 100.0,
+            GREEN,
+        );
+        gizmos.arrow_2d(
+            xform.translation.xy(),
+            xform.translation.xy() + xform.up().xy() * 100.0,
+            BLUE,
+        );
     }
 }
 
