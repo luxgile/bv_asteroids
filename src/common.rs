@@ -8,8 +8,8 @@ use rand::{prelude::*, Rng};
 pub fn plugin(app: &mut App) {
     app.register_type::<Lifetime>();
     app.add_systems(Update, process_lifetimes);
-    app.add_event::<OnCollisionEnter>();
-    app.add_event::<OnHitEnter>();
+    app.add_event::<OnCollisionEnter>().add_event::<OnHit>();
+    app.observe(apply_destroy_on_death);
 }
 
 #[derive(Bundle, Default)]
@@ -27,9 +27,25 @@ pub struct PhysicsBundle {
 pub struct OnCollisionEnter;
 
 #[derive(Event)]
-pub struct OnHitEnter(pub HitData);
+pub struct OnHit(pub HitData);
 
-#[derive(Debug)]
+#[derive(Event)]
+pub struct OnDeath(pub HitData);
+
+#[derive(Component, Default)]
+pub struct DestroyOnDeath;
+
+fn apply_destroy_on_death(
+    e_death: Trigger<OnDeath>,
+    mut cmds: Commands,
+    q_tags: Query<&DestroyOnDeath>,
+) {
+    if q_tags.get(e_death.entity()).is_ok() {
+        cmds.entity(e_death.entity()).despawn();
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct HitData {
     pub point: Vec3,
     pub dir: Dir3,

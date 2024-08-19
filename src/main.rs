@@ -4,6 +4,7 @@ mod common;
 mod player;
 mod projectiles;
 mod scenes;
+mod score;
 mod shooter;
 
 use bevy::{
@@ -40,6 +41,7 @@ fn main() {
         asteroids::plugin,
         projectiles::plugin,
         scenes::plugin,
+        score::plugin,
     ));
     app.run();
 }

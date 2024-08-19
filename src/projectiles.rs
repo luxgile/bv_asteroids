@@ -113,7 +113,6 @@ fn debug_projectile_direction(
 fn look_at_velocity(mut q_projectiles: Query<(&Velocity, &mut Transform), With<Projectile>>) {
     for (vel, mut xform) in q_projectiles.iter_mut() {
         xform.look_to(Vec3::Z, vel.linvel.normalize().extend(0.0));
-        println!("{:?}", xform.up());
     }
 }
 
@@ -124,13 +123,12 @@ fn hit_entity(
     entity_source: Entity,
     entity_target: Entity,
 ) {
-    println!("{:?}", xform);
     let hit = HitData {
         damage: projectile.damage,
         point: xform.translation,
         dir: xform.up(),
         dealer: entity_source,
     };
-    cmds.trigger_targets(OnHitEnter(hit), entity_target);
+    cmds.trigger_targets(OnHit(hit), entity_target);
     cmds.entity(entity_source).despawn();
 }
