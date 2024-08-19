@@ -20,6 +20,7 @@ pub struct PhysicsBundle {
     pub velocity: Velocity,
     pub restitution: Restitution,
     pub damping: Damping,
+    pub mass: ColliderMassProperties,
 }
 
 #[derive(Event)]
@@ -28,6 +29,7 @@ pub struct OnCollisionEnter;
 #[derive(Event)]
 pub struct OnHitEnter(pub HitData);
 
+#[derive(Debug)]
 pub struct HitData {
     pub point: Vec3,
     pub dir: Dir3,

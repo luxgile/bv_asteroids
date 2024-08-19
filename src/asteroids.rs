@@ -50,6 +50,7 @@ impl AsteroidBundle {
                 rigidbody: RigidBody::Dynamic,
                 collider: Collider::ball(radius),
                 gravity: GravityScale(0.0),
+                mass: ColliderMassProperties::Mass(1.0),
                 ..default()
             },
         }
@@ -78,10 +79,11 @@ fn on_asteroid_hit(
             },
         );
 
+        println!("{:?}", hit);
         cmds.entity(e_hit.entity())
             .insert(AssetAnimator::new(tween))
             .insert(ExternalImpulse {
-                impulse: hit.dir.truncate() * 1000.0,
+                impulse: hit.dir.xy() * 100.0,
                 ..default()
             });
 

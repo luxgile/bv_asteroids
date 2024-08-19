@@ -30,7 +30,7 @@ fn main() {
         }),
         Wireframe2dPlugin,
         RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
-        RapierDebugRenderPlugin::default(),
+        // RapierDebugRenderPlugin::default(),
         WorldInspectorPlugin::new(),
         bevy_tweening::TweeningPlugin,
         common::plugin,

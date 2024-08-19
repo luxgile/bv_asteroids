@@ -33,6 +33,6 @@ fn ingame_setup(
     let mut rng = SimpleRng::default();
     let mut asteroid = asteroids::AsteroidBundle::new(&mut meshes, &mut materials, 200.0, 2);
     asteroid.mesh.transform.translation = Vec3::new(750.0, 450.0, 0.0);
-    asteroid.physics.velocity.linvel = rng.circle() * rng.value_range(100.0, 500.0);
+    // asteroid.physics.velocity.linvel = rng.circle() * rng.value_range(100.0, 500.0);
     cmds.spawn(asteroid);
 }

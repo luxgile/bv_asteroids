@@ -1,5 +1,6 @@
 use crate::projectiles::*;
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 pub fn plugin(app: &mut App) {
     app.register_type::<Shooter>();
@@ -17,12 +18,16 @@ pub struct Shooter {
 fn shooter_fire(
     mut cmds: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
+    mut gizmos: Gizmos,
     mut materials: ResMut<Assets<ColorMaterial>>,
     time: Res<Time>,
     mut q_shooters: Query<(&GlobalTransform, &mut Shooter)>,
 ) {
     for (transform, mut shooter) in q_shooters.iter_mut() {
-        shooter.shoot_timer += time.delta_seconds();
+        if shooter.shoot_timer < shooter.shoot_delay {
+            shooter.shoot_timer += time.delta_seconds();
+        }
+
         while shooter.enabled && shooter.shoot_timer >= shooter.shoot_delay {
             shooter.shoot_timer -= shooter.shoot_delay;
 
@@ -36,6 +41,7 @@ fn shooter_fire(
                 spawn_position,
                 spawn_velocity,
             );
+
             cmds.spawn(projectile);
         }
     }
