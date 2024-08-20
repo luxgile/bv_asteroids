@@ -1,8 +1,8 @@
-use std::time::Duration;
+use std::{f32::consts::PI, time::Duration};
 
 use bevy::{
     color::palettes::css::*,
-    ecs::reflect,
+    ecs::{reflect, system::RunSystemOnce, world::Command},
     prelude::*,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
@@ -25,53 +25,56 @@ pub struct Asteroid {
     pub depth: u32,
 }
 
-#[derive(Bundle, Default)]
-pub struct AsteroidBundle {
-    pub asteroid: Asteroid,
-    pub mesh: MaterialMesh2dBundle<ColorMaterial>,
-    pub physics: PhysicsBundle,
-    pub destroy_on_death: DestroyOnDeath,
-    pub score: Score,
+pub struct SpawnAsteroid {
+    pub position: Vec2,
+    pub velocity: Vec2,
+    pub depth: u32,
 }
-impl AsteroidBundle {
-    pub fn new(
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<ColorMaterial>>,
-        radius: f32,
-        depth: u32,
-    ) -> Self {
-        Self {
-            asteroid: Asteroid {
-                health: depth as f32 * 2.5,
-                depth,
-            },
-            score: Score(depth),
-            mesh: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Circle::new(radius))),
-                material: materials.add(Color::from(BROWN)),
-                transform: Transform::from_xyz(750.0, 450.0, 0.0),
-                ..default()
-            },
-            physics: PhysicsBundle {
-                rigidbody: RigidBody::Dynamic,
-                collider: Collider::ball(radius),
-                gravity: GravityScale(0.0),
-                mass: ColliderMassProperties::Mass(1.0 * depth as f32),
+impl Command for SpawnAsteroid {
+    fn apply(self, world: &mut World) {
+        world.run_system_once_with(self, spawn_asteroid);
+    }
+}
+fn spawn_asteroid(
+    spawn: In<SpawnAsteroid>,
+    mut cmds: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    let depth = spawn.depth;
+    let health = (depth + 1) as f32 * 2.5;
+    let radius = (depth + 1) as f32 * 100.0;
+    cmds.spawn((
+        Name::new(format!("Asteroid - {:?}", depth)),
+        Asteroid { health, depth },
+        Score(depth + 1),
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Circle::new(radius))),
+            material: materials.add(Color::from(BROWN)),
+            transform: Transform::from_translation(spawn.position.extend(0.0)),
+            ..default()
+        },
+        PhysicsBundle {
+            rigidbody: RigidBody::Dynamic,
+            collider: Collider::ball(radius),
+            gravity: GravityScale(0.0),
+            mass: ColliderMassProperties::Mass(1.0 * depth as f32),
+            velocity: Velocity {
+                linvel: spawn.velocity,
                 ..default()
             },
             ..default()
-        }
-    }
+        },
+        DestroyOnDeath,
+    ));
 }
 
 fn on_asteroid_hit(
     e_hit: Trigger<OnHit>,
     mut cmds: Commands,
-    mut q_asteroids: Query<(&mut Asteroid, &GlobalTransform, &Collider, &Velocity)>,
+    mut q_asteroids: Query<&mut Asteroid>,
 ) {
-    if let Ok((mut asteroid, asteroid_xform, asteroid_collider, vel)) =
-        q_asteroids.get_mut(e_hit.entity())
-    {
+    if let Ok(mut asteroid) = q_asteroids.get_mut(e_hit.entity()) {
         let hit = &e_hit.event().0;
         asteroid.health -= hit.damage;
 
@@ -101,32 +104,26 @@ fn on_asteroid_death(
     e_death: Trigger<OnDeath>,
     mut cmds: Commands,
     mut q_asteroids: Query<(&mut Asteroid, &GlobalTransform, &Collider, &Velocity)>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     if let Ok((mut asteroid, asteroid_xform, asteroid_collider, vel)) =
         q_asteroids.get_mut(e_death.entity())
     {
         if asteroid.depth > 0 {
-            let mut rng = SimpleRng::default();
-
             let size = asteroid_collider.as_ball().unwrap().radius();
-            let rng_dir = (rng.circle() * size).extend(0.0);
+            let spawn_dir = Vec2::from_angle(PI / 2.0).rotate(vel.linvel.normalize()) * size;
             let depth = asteroid.depth - 1;
 
-            let mut bundle = AsteroidBundle::new(&mut meshes, &mut materials, size / 2.0, depth);
-            bundle.mesh.transform.translation = asteroid_xform.translation() + rng_dir;
-            bundle.physics.velocity.linvel =
-                Vec2::from_angle(f32::to_radians(-45.0 / (4.0 - asteroid.depth as f32)))
-                    .rotate(vel.linvel);
-            cmds.spawn(bundle);
+            cmds.add(SpawnAsteroid {
+                position: asteroid_xform.translation().xy() - spawn_dir,
+                velocity: Vec2::from_angle(PI / -9.0).rotate(vel.linvel),
+                depth,
+            });
 
-            let mut bundle = AsteroidBundle::new(&mut meshes, &mut materials, size / 2.0, depth);
-            bundle.mesh.transform.translation = asteroid_xform.translation() - rng_dir;
-            bundle.physics.velocity.linvel =
-                Vec2::from_angle(f32::to_radians(45.0 / (4.0 - asteroid.depth as f32)))
-                    .rotate(vel.linvel);
-            cmds.spawn(bundle);
+            cmds.add(SpawnAsteroid {
+                position: asteroid_xform.translation().xy() + spawn_dir,
+                velocity: Vec2::from_angle(PI / 9.0).rotate(vel.linvel),
+                depth,
+            });
         }
     }
 }
