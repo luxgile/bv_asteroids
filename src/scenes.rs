@@ -1,8 +1,11 @@
+use std::time::Duration;
+
 use crate::*;
 use asteroids::SpawnAsteroid;
 use bevy::prelude::*;
 use camera::PlayerCameraBundle;
 use common::*;
+use spawner::AsteroidSpawner;
 
 pub fn plugin(app: &mut App) {
     app.register_type::<GameStates>();
@@ -31,10 +34,13 @@ fn ingame_setup(
     let player = player::PlayerBundle::new(&mut meshes, &mut materials);
     cmds.spawn(player);
 
-    let mut rng = SimpleRng::default();
-    cmds.add(SpawnAsteroid {
-        position: Vec2::new(750.0, 450.0),
-        velocity: rng.circle() * rng.value_range(100.0, 200.0),
-        depth: 2,
+    cmds.spawn(AsteroidSpawner {
+        timer: Timer::new(Duration::from_secs_f32(5.0), TimerMode::Repeating),
     });
+    // let mut rng = SimpleRng::default();
+    // cmds.add(SpawnAsteroid {
+    //     position: Vec2::new(750.0, 450.0),
+    //     velocity: rng.circle() * rng.value_range(100.0, 200.0),
+    //     depth: 2,
+    // });
 }

@@ -82,15 +82,15 @@ fn on_asteroid_hit(
             EaseFunction::ExponentialOut,
             Duration::from_secs_f32(0.3),
             ColorMaterialColorLens {
-                start: Color::linear_rgb(1.0, 1.0, 1.0),
-                end: Color::linear_rgb(1.0, 0.0, 0.0),
+                start: WHITE.into(),
+                end: BROWN.into(),
             },
         );
 
         cmds.entity(e_hit.entity())
             .insert(AssetAnimator::new(tween))
             .insert(ExternalImpulse {
-                impulse: hit.dir.xy() * 100.0,
+                impulse: hit.dir.xy() * 10.0,
                 ..default()
             });
 
@@ -110,20 +110,22 @@ fn on_asteroid_death(
     {
         if asteroid.depth > 0 {
             let size = asteroid_collider.as_ball().unwrap().radius();
-            let spawn_dir = Vec2::from_angle(PI / 2.0).rotate(vel.linvel.normalize()) * size;
+            let spawn_offset = Vec2::from_angle(PI / 2.0).rotate(vel.linvel.normalize()) * size;
             let depth = asteroid.depth - 1;
 
             cmds.add(SpawnAsteroid {
-                position: asteroid_xform.translation().xy() - spawn_dir,
-                velocity: Vec2::from_angle(PI / -9.0).rotate(vel.linvel),
+                position: asteroid_xform.translation().xy() - spawn_offset,
+                velocity: vel.linvel - spawn_offset.normalize() * 50.0,
                 depth,
             });
 
             cmds.add(SpawnAsteroid {
-                position: asteroid_xform.translation().xy() + spawn_dir,
-                velocity: Vec2::from_angle(PI / 9.0).rotate(vel.linvel),
+                position: asteroid_xform.translation().xy() + spawn_offset,
+                velocity: vel.linvel + spawn_offset.normalize() * 50.0,
                 depth,
             });
+
+            // TODO: Drop currency to be picked up.
         }
     }
 }

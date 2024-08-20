@@ -6,6 +6,7 @@ mod projectiles;
 mod scenes;
 mod score;
 mod shooter;
+mod spawner;
 
 use bevy::{
     prelude::*,
@@ -42,6 +43,7 @@ fn main() {
         projectiles::plugin,
         scenes::plugin,
         score::plugin,
+        spawner::plugin,
     ));
     app.run();
 }
