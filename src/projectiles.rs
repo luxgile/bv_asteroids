@@ -21,6 +21,7 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Default, Reflect)]
+#[reflect(Component)]
 pub struct Projectile {
     damage: f32,
 }

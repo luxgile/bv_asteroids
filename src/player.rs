@@ -18,6 +18,7 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Reflect)]
+#[reflect(Component)]
 pub struct Player;
 
 #[derive(Bundle)]

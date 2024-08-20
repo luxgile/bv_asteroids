@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use bevy::{
     color::palettes::css::*,
+    ecs::reflect,
     prelude::*,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
@@ -18,6 +19,7 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Default, Reflect)]
+#[reflect(Component)]
 pub struct Asteroid {
     pub health: f32,
     pub depth: u32,

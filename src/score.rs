@@ -11,9 +11,11 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Resource, Reflect, Default)]
+#[reflect(Resource)]
 pub struct PlayerScore(pub u32);
 
 #[derive(Component, Reflect, Default)]
+#[reflect(Component)]
 pub struct Score(pub u32);
 
 fn apply_score_reward(

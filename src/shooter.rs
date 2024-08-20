@@ -9,6 +9,7 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Default, Reflect)]
+#[reflect(Component)]
 pub struct Shooter {
     pub enabled: bool,
     pub shoot_timer: f32,

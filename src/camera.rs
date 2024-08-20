@@ -9,6 +9,7 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Default, Reflect)]
+#[reflect(Component)]
 pub struct PlayerCamera {
     pub smoothness: f32,
 }

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use bevy::prelude::*;
+use bevy::{ecs::reflect, prelude::*};
 use bevy_rapier2d::prelude::*;
 
 use rand::{prelude::*, Rng};
@@ -62,6 +62,7 @@ impl Default for HitData {
 }
 
 #[derive(Component, Default, Reflect)]
+#[reflect(Component)]
 pub struct Lifetime(Timer);
 impl Lifetime {
     pub fn new(time: f32) -> Self {
