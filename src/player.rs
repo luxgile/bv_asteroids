@@ -4,6 +4,7 @@ use crate::common::*;
 use crate::scenes::GameStates;
 use crate::shooter::*;
 use bevy::{
+    ecs::{system::RunSystemOnce, world::Command},
     prelude::*,
     sprite::{MaterialMesh2dBundle, Mesh2dHandle},
 };
@@ -23,59 +24,62 @@ pub fn plugin(app: &mut App) {
 #[reflect(Component)]
 pub struct Player;
 
-#[derive(Bundle)]
-pub struct PlayerBundle {
-    player: Player,
-    shooter: Shooter,
-    receiver: PickUpReceiver,
-    mesh: MaterialMesh2dBundle<ColorMaterial>,
-    physics: PhysicsBundle,
-}
-impl PlayerBundle {
-    pub fn new(
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<ColorMaterial>>,
-    ) -> Self {
-        Self {
-            player: Player,
-            shooter: Shooter {
-                shoot_delay: 0.4,
-                ..default()
-            },
-            receiver: PickUpReceiver {
-                check_timer: Timer::from_seconds(0.5, TimerMode::Repeating),
-                chase_distance: 250.0,
-                pick_distance: 50.0,
-                pick_speed: 100.0,
-                ..default()
-            },
-            mesh: MaterialMesh2dBundle {
-                mesh: Mesh2dHandle(meshes.add(Triangle2d::new(
-                    Vec2::new(0.0, 50.0),
-                    Vec2::new(-50.0, -50.0),
-                    Vec2::new(50.0, -50.0),
-                ))),
-                material: materials.add(Color::linear_rgb(1.0, 1.0, 1.0)),
-                ..default()
-            },
-            physics: PhysicsBundle {
-                rigidbody: RigidBody::Dynamic,
-                collider: Collider::triangle(
-                    Vect::new(0.0, 50.0),
-                    Vect::new(-50.0, -50.0),
-                    Vect::new(50.0, -50.0),
-                ),
-                damping: Damping {
-                    linear_damping: 1.0,
-                    ..default()
-                },
-                gravity: GravityScale(0.0),
-                restitution: Restitution::new(0.7),
-                ..default()
-            },
-        }
+pub struct SpawnPlayer;
+impl Command for SpawnPlayer {
+    fn apply(self, world: &mut World) {
+        world.run_system_once_with(self, spawn_player);
     }
 }
+fn spawn_player(
+    spawn: In<SpawnPlayer>,
+    mut cmds: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    cmds.spawn((
+        Name::new("Player"),
+        StateScoped(GameStates::InGame),
+        Player,
+        Shooter {
+            shoot_delay: 0.4,
+            ..default()
+        },
+        PickUpReceiver {
+            check_timer: Timer::from_seconds(0.5, TimerMode::Repeating),
+            chase_distance: 500.0,
+            pick_distance: 50.0,
+            pick_speed: 300.0,
+            ..default()
+        },
+        MaterialMesh2dBundle {
+            mesh: Mesh2dHandle(meshes.add(Triangle2d::new(
+                Vec2::new(0.0, 50.0),
+                Vec2::new(-50.0, -50.0),
+                Vec2::new(50.0, -50.0),
+            ))),
+            material: materials.add(Color::linear_rgb(1.0, 1.0, 1.0)),
+            ..default()
+        },
+        PhysicsBundle {
+            rigidbody: RigidBody::Dynamic,
+            collider: Collider::triangle(
+                Vect::new(0.0, 50.0),
+                Vect::new(-50.0, -50.0),
+                Vect::new(50.0, -50.0),
+            ),
+            damping: Damping {
+                linear_damping: 1.0,
+                ..default()
+            },
+            gravity: GravityScale(0.0),
+            restitution: Restitution::new(0.7),
+            ..default()
+        },
+    ));
+}
+
+#[derive(Event, Default)]
+pub struct OnPlayerDeath;
 
 fn player_movement(
     mut q_players: Query<&mut Velocity, With<Player>>,

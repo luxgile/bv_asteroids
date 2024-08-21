@@ -1,10 +1,9 @@
 use std::time::Duration;
 
 use crate::*;
-use asteroids::SpawnAsteroid;
 use bevy::prelude::*;
 use camera::PlayerCameraBundle;
-use common::*;
+use player::{OnPlayerDeath, SpawnPlayer};
 use score::SpawnMoney;
 use spawner::AsteroidSpawner;
 
@@ -23,25 +22,39 @@ pub enum GameStates {
     InGame,
 }
 
-fn ingame_setup(
-    mut cmds: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
+fn ingame_setup(mut cmds: Commands) {
     let mut player_camera = PlayerCameraBundle::new();
     player_camera.camera.projection.scale = 5.0;
     cmds.spawn(player_camera);
 
-    let player = player::PlayerBundle::new(&mut meshes, &mut materials);
-    cmds.spawn(player);
+    cmds.add(SpawnPlayer);
 
-    cmds.spawn(AsteroidSpawner {
-        timer: Timer::new(Duration::from_secs_f32(5.0), TimerMode::Repeating),
-    });
+    cmds.spawn((
+        Name::new("Spawner"),
+        StateScoped(GameStates::InGame),
+        AsteroidSpawner {
+            timer: Timer::new(Duration::from_secs_f32(5.0), TimerMode::Repeating),
+        },
+    ));
 
     cmds.add(SpawnMoney {
-        money: 10,
+        money: 50,
         position: Vec2::new(750.0, 500.0),
         radial_force: 100.0..250.0,
     })
+}
+
+fn menu_setup(mut cmds: Commands) {
+    cmds.spawn((StateScoped(GameStates::Menu)));
+}
+
+fn on_player_death(
+    e_player_dead: Trigger<OnPlayerDeath>,
+    mut r_state: ResMut<NextState<GameStates>>,
+) {
+    r_state.set(GameStates::Menu);
+}
+
+fn on_play_pressed(mut r_state: ResMut<NextState<GameStates>>) {
+    r_state.set(GameStates::InGame);
 }

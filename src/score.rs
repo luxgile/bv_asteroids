@@ -8,14 +8,14 @@ use bevy::{
 };
 use bevy_rapier2d::prelude::*;
 
-use crate::common::*;
+use crate::{common::*, scenes::GameStates};
 
 pub fn plugin(app: &mut App) {
     app.insert_resource(PlayerCurrency(0));
     app.register_type::<PlayerCurrency>();
     app.register_type::<Money>();
 
-    app.observe(apply_score_reward);
+    app.observe(on_pickup_money);
 }
 
 #[derive(Resource, Reflect, Default)]
@@ -52,6 +52,7 @@ fn spawn_money(
     for i in 0..spawn.0.money {
         cmds.spawn((
             Money(1),
+            StateScoped(GameStates::InGame),
             PickUp::Idle,
             MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Rectangle::from_size(Vec2::new(20.0, 20.0)))),
@@ -76,12 +77,12 @@ fn spawn_money(
     }
 }
 
-fn apply_score_reward(
-    e_death: Trigger<OnDeath>,
+fn on_pickup_money(
+    e_pickup: Trigger<OnPickedUp>,
     q_score: Query<&Money>,
     mut r_score: ResMut<PlayerCurrency>,
 ) {
-    if let Ok(score) = q_score.get(e_death.entity()) {
+    if let Ok(score) = q_score.get(e_pickup.entity()) {
         r_score.0 += score.0;
         println!("New score: {:?}", r_score.0);
     }

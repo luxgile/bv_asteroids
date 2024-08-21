@@ -10,7 +10,11 @@ use bevy_rapier2d::prelude::*;
 use bevy_tweening::*;
 use lens::ColorMaterialColorLens;
 
-use crate::{common::*, score::Money};
+use crate::{
+    common::*,
+    scenes::GameStates,
+    score::{Money, MoneyDrop, SpawnMoney},
+};
 
 pub fn plugin(app: &mut App) {
     app.register_type::<Asteroid>();
@@ -46,8 +50,9 @@ fn spawn_asteroid(
     let radius = (depth + 1) as f32 * 100.0;
     cmds.spawn((
         Name::new(format!("Asteroid - {:?}", depth)),
+        StateScoped(GameStates::InGame),
         Asteroid { health, depth },
-        Money(depth + 1),
+        MoneyDrop(depth + 1),
         MaterialMesh2dBundle {
             mesh: Mesh2dHandle(meshes.add(Circle::new(radius))),
             material: materials.add(Color::from(BROWN)),
@@ -103,9 +108,15 @@ fn on_asteroid_hit(
 fn on_asteroid_death(
     e_death: Trigger<OnDeath>,
     mut cmds: Commands,
-    mut q_asteroids: Query<(&mut Asteroid, &GlobalTransform, &Collider, &Velocity)>,
+    mut q_asteroids: Query<(
+        &mut Asteroid,
+        &GlobalTransform,
+        &Collider,
+        &Velocity,
+        Option<&MoneyDrop>,
+    )>,
 ) {
-    if let Ok((mut asteroid, asteroid_xform, asteroid_collider, vel)) =
+    if let Ok((mut asteroid, asteroid_xform, asteroid_collider, vel, money_drop)) =
         q_asteroids.get_mut(e_death.entity())
     {
         if asteroid.depth > 0 {
@@ -125,7 +136,13 @@ fn on_asteroid_death(
                 depth,
             });
 
-            // TODO: Drop currency to be picked up.
+            if let Some(money) = money_drop {
+                cmds.add(SpawnMoney {
+                    money: money.0,
+                    position: asteroid_xform.translation().xy(),
+                    radial_force: 150.0..300.0,
+                });
+            }
         }
     }
 }

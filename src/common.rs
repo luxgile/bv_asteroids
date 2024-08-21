@@ -15,7 +15,7 @@ pub fn plugin(app: &mut App) {
     app.register_type::<PickUp>();
     app.register_type::<PickUpReceiver>();
     app.add_event::<OnPickedUp>();
-    app.add_systems(Update, (detect_pickup, attract_pickups));
+    app.add_systems(Update, (detect_pickups, attract_pickups));
 }
 
 #[derive(Bundle, Default)]
@@ -174,16 +174,18 @@ fn attract_pickups(
     mut q_pickups: Query<(&mut Transform), With<PickUp>>,
 ) {
     for (receiver_entity, mut receiver, xform) in q_receivers.iter_mut() {
+        let pick_distance = receiver.pick_distance;
+        let pick_speed = receiver.pick_speed;
         let mut entities_to_remove = Vec::new();
         for (i, e) in receiver.entities_picked.iter_mut().enumerate() {
             if let Ok(mut pickup) = q_pickups.get_mut(*e) {
-                pickup.translation += (xform.translation() - pickup.translation).normalize()
-                    * receiver.pick_speed
+                let pickup_pos = pickup.translation;
+                pickup.translation += (xform.translation() - pickup_pos).normalize()
+                    * pick_speed
                     * r_time.delta_seconds();
 
-                if xform.translation().distance(pickup.translation) <= receiver.pick_distance {
-                    // receiver.entities_picked.remove(i);
-                    entities_to_remove.push(i);
+                if xform.translation().distance(pickup.translation) <= pick_distance {
+                    entities_to_remove.push(*e);
                     cmds.entity(*e).despawn();
                     cmds.trigger_targets(OnPickedUp { receiver_entity }, *e);
                 }
@@ -191,7 +193,7 @@ fn attract_pickups(
         }
 
         for i in entities_to_remove {
-            receiver.entities_picked.remove(i);
+            receiver.entities_picked.retain(|x| *x != i);
         }
     }
 }
