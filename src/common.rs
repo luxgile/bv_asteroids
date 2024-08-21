@@ -8,8 +8,14 @@ use rand::{prelude::*, Rng};
 pub fn plugin(app: &mut App) {
     app.register_type::<Lifetime>();
     app.add_systems(Update, process_lifetimes);
+
     app.add_event::<OnCollisionEnter>().add_event::<OnHit>();
     app.observe(apply_destroy_on_death);
+
+    app.register_type::<PickUp>();
+    app.register_type::<PickUpReceiver>();
+    app.add_event::<OnPickedUp>();
+    app.add_systems(Update, (detect_pickup, attract_pickups));
 }
 
 #[derive(Bundle, Default)]
@@ -106,5 +112,86 @@ pub struct SimpleRng {
 impl RngSampler for SimpleRng {
     fn value(&mut self) -> f32 {
         self.rng.gen()
+    }
+}
+
+#[derive(Component, Default, Reflect)]
+#[reflect(Component)]
+pub enum PickUp {
+    #[default]
+    Idle,
+    Picking,
+}
+#[derive(Component, Default, Reflect)]
+#[reflect(Component)]
+pub struct PickUpReceiver {
+    pub check_timer: Timer,
+    pub chase_distance: f32,
+    pub pick_distance: f32,
+    pub pick_speed: f32,
+    pub entities_picked: Vec<Entity>,
+}
+#[derive(Event)]
+pub struct OnPickedUp {
+    receiver_entity: Entity,
+}
+
+fn detect_pickups(
+    r_rapier: Res<RapierContext>,
+    r_time: Res<Time>,
+    mut q_receivers: Query<(&mut PickUpReceiver, &GlobalTransform)>,
+    mut q_pickups: Query<&mut PickUp>,
+) {
+    for (mut receiver, xform) in q_receivers.iter_mut() {
+        if receiver.check_timer.tick(r_time.delta()).finished() {
+            let circle = Collider::ball(receiver.chase_distance);
+            r_rapier.intersections_with_shape(
+                xform.translation().xy(),
+                0.0,
+                &circle,
+                QueryFilter::default(),
+                |entity| {
+                    if let Ok(mut pickup) = q_pickups.get_mut(entity) {
+                        match *pickup {
+                            PickUp::Idle => {
+                                *pickup = PickUp::Picking;
+                                receiver.entities_picked.push(entity);
+                            }
+                            PickUp::Picking => return true,
+                        }
+                    }
+                    true
+                },
+            );
+        }
+    }
+}
+
+fn attract_pickups(
+    mut cmds: Commands,
+    r_time: Res<Time>,
+    mut q_receivers: Query<(Entity, &mut PickUpReceiver, &GlobalTransform)>,
+    mut q_pickups: Query<(&mut Transform), With<PickUp>>,
+) {
+    for (receiver_entity, mut receiver, xform) in q_receivers.iter_mut() {
+        let mut entities_to_remove = Vec::new();
+        for (i, e) in receiver.entities_picked.iter_mut().enumerate() {
+            if let Ok(mut pickup) = q_pickups.get_mut(*e) {
+                pickup.translation += (xform.translation() - pickup.translation).normalize()
+                    * receiver.pick_speed
+                    * r_time.delta_seconds();
+
+                if xform.translation().distance(pickup.translation) <= receiver.pick_distance {
+                    // receiver.entities_picked.remove(i);
+                    entities_to_remove.push(i);
+                    cmds.entity(*e).despawn();
+                    cmds.trigger_targets(OnPickedUp { receiver_entity }, *e);
+                }
+            }
+        }
+
+        for i in entities_to_remove {
+            receiver.entities_picked.remove(i);
+        }
     }
 }

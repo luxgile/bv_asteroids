@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::common::*;
 use crate::scenes::GameStates;
 use crate::shooter::*;
@@ -25,6 +27,7 @@ pub struct Player;
 pub struct PlayerBundle {
     player: Player,
     shooter: Shooter,
+    receiver: PickUpReceiver,
     mesh: MaterialMesh2dBundle<ColorMaterial>,
     physics: PhysicsBundle,
 }
@@ -37,6 +40,13 @@ impl PlayerBundle {
             player: Player,
             shooter: Shooter {
                 shoot_delay: 0.4,
+                ..default()
+            },
+            receiver: PickUpReceiver {
+                check_timer: Timer::from_seconds(0.5, TimerMode::Repeating),
+                chase_distance: 250.0,
+                pick_distance: 50.0,
+                pick_speed: 100.0,
                 ..default()
             },
             mesh: MaterialMesh2dBundle {

@@ -5,6 +5,7 @@ use asteroids::SpawnAsteroid;
 use bevy::prelude::*;
 use camera::PlayerCameraBundle;
 use common::*;
+use score::SpawnMoney;
 use spawner::AsteroidSpawner;
 
 pub fn plugin(app: &mut App) {
@@ -37,10 +38,10 @@ fn ingame_setup(
     cmds.spawn(AsteroidSpawner {
         timer: Timer::new(Duration::from_secs_f32(5.0), TimerMode::Repeating),
     });
-    // let mut rng = SimpleRng::default();
-    // cmds.add(SpawnAsteroid {
-    //     position: Vec2::new(750.0, 450.0),
-    //     velocity: rng.circle() * rng.value_range(100.0, 200.0),
-    //     depth: 2,
-    // });
+
+    cmds.add(SpawnMoney {
+        money: 10,
+        position: Vec2::new(750.0, 500.0),
+        radial_force: 100.0..250.0,
+    })
 }

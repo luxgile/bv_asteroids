@@ -10,7 +10,7 @@ use bevy_rapier2d::prelude::*;
 use bevy_tweening::*;
 use lens::ColorMaterialColorLens;
 
-use crate::{common::*, score::Score};
+use crate::{common::*, score::Money};
 
 pub fn plugin(app: &mut App) {
     app.register_type::<Asteroid>();
@@ -47,7 +47,7 @@ fn spawn_asteroid(
     cmds.spawn((
         Name::new(format!("Asteroid - {:?}", depth)),
         Asteroid { health, depth },
-        Score(depth + 1),
+        Money(depth + 1),
         MaterialMesh2dBundle {
             mesh: Mesh2dHandle(meshes.add(Circle::new(radius))),
             material: materials.add(Color::from(BROWN)),
