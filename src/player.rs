@@ -15,7 +15,12 @@ pub fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        (player_movement, player_look_at_mouse, player_input_shooting)
+        (
+            player_movement,
+            player_look_at_mouse,
+            player_input_shooting,
+            player_death_touch,
+        )
             .run_if(in_state(GameStates::InGame)),
     );
 }
@@ -77,6 +82,9 @@ fn spawn_player(
         },
     ));
 }
+
+#[derive(Component, Default)]
+pub struct KillPlayerOnTouch;
 
 #[derive(Event, Default)]
 pub struct OnPlayerDeath;
@@ -140,4 +148,24 @@ fn player_input_shooting(
 
     let mut player = q_players.single_mut();
     player.enabled = kbd.pressed(MouseButton::Left);
+}
+
+fn player_death_touch(
+    mut cmds: Commands,
+    mut q_players: Query<Entity, With<Player>>,
+    q_deathtouch: Query<Entity, With<KillPlayerOnTouch>>,
+    r_rapier: Res<RapierContext>,
+) {
+    let player = q_players.single();
+    for pair in r_rapier.contact_pairs_with(player) {
+        let other = if pair.collider1() == player {
+            pair.collider2()
+        } else {
+            pair.collider1()
+        };
+        if q_deathtouch.get(other).is_ok() {
+            cmds.trigger_targets(OnPlayerDeath, player);
+            println!("Holy fuck the player is dead!");
+        }
+    }
 }

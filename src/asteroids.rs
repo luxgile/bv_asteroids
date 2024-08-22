@@ -12,6 +12,7 @@ use lens::ColorMaterialColorLens;
 
 use crate::{
     common::*,
+    player::KillPlayerOnTouch,
     scenes::GameStates,
     score::{Money, MoneyDrop, SpawnMoney},
 };
@@ -53,6 +54,7 @@ fn spawn_asteroid(
         StateScoped(GameStates::InGame),
         Asteroid { health, depth },
         MoneyDrop(depth + 1),
+        KillPlayerOnTouch,
         MaterialMesh2dBundle {
             mesh: Mesh2dHandle(meshes.add(Circle::new(radius))),
             material: materials.add(Color::from(BROWN)),
