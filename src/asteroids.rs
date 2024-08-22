@@ -51,7 +51,7 @@ fn spawn_asteroid(
     let radius = (depth + 1) as f32 * 100.0;
     cmds.spawn((
         Name::new(format!("Asteroid - {:?}", depth)),
-        StateScoped(GameStates::InGame),
+        StateScoped(GameStates::Match),
         Asteroid { health, depth },
         MoneyDrop(depth + 1),
         KillPlayerOnTouch,
@@ -63,7 +63,7 @@ fn spawn_asteroid(
         },
         PhysicsBundle {
             rigidbody: RigidBody::Dynamic,
-            collider: Collider::ball(radius),
+            collider: Collider::ball(radius - 10.0), // Adding some room to the collider for the player.
             gravity: GravityScale(0.0),
             mass: ColliderMassProperties::Mass(1.0 * depth as f32),
             velocity: Velocity {

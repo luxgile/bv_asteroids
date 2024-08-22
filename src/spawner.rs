@@ -1,12 +1,12 @@
-use std::time::Duration;
-
-use crate::{asteroids::*, common::*, player::Player};
-use bevy::prelude::*;
+use crate::prelude::*;
 
 pub fn plugin(app: &mut App) {
     app.register_type::<AsteroidSpawner>();
 
-    app.add_systems(Update, run_asteroid_spawner);
+    app.add_systems(
+        Update,
+        run_asteroid_spawner.run_if(in_state(GameStates::Match)),
+    );
 }
 
 #[derive(Component, Reflect)]

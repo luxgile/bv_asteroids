@@ -1,3 +1,6 @@
+pub mod follower;
+pub use follower::*;
+
 use std::time::Duration;
 
 use bevy::{ecs::reflect, prelude::*};
@@ -16,6 +19,8 @@ pub fn plugin(app: &mut App) {
     app.register_type::<PickUpReceiver>();
     app.add_event::<OnPickedUp>();
     app.add_systems(Update, (detect_pickups, attract_pickups));
+
+    app.add_plugins(follower::plugin);
 }
 
 #[derive(Bundle, Default)]

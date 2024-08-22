@@ -20,9 +20,10 @@ pub fn plugin(app: &mut App) {
             player_look_at_mouse,
             player_input_shooting,
             player_death_touch,
-        )
-            .run_if(in_state(GameStates::InGame)),
+        ),
     );
+
+    app.observe(on_player_death);
 }
 
 #[derive(Component, Reflect)]
@@ -43,7 +44,6 @@ fn spawn_player(
 ) {
     cmds.spawn((
         Name::new("Player"),
-        StateScoped(GameStates::InGame),
         Player,
         Shooter {
             shoot_delay: 0.4,
@@ -53,7 +53,7 @@ fn spawn_player(
             check_timer: Timer::from_seconds(0.5, TimerMode::Repeating),
             chase_distance: 500.0,
             pick_distance: 50.0,
-            pick_speed: 300.0,
+            pick_speed: 750.0,
             ..default()
         },
         MaterialMesh2dBundle {
@@ -168,4 +168,8 @@ fn player_death_touch(
             println!("Holy fuck the player is dead!");
         }
     }
+}
+
+fn on_player_death(e_player_death: Trigger<OnPlayerDeath>, mut cmds: Commands) {
+    cmds.entity(e_player_death.entity()).despawn();
 }

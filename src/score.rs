@@ -52,7 +52,7 @@ fn spawn_money(
     for i in 0..spawn.0.money {
         cmds.spawn((
             Money(1),
-            StateScoped(GameStates::InGame),
+            StateScoped(GameStates::Match),
             PickUp::Idle,
             MaterialMesh2dBundle {
                 mesh: Mesh2dHandle(meshes.add(Rectangle::from_size(Vec2::new(20.0, 20.0)))),
@@ -71,7 +71,7 @@ fn spawn_money(
             Velocity {
                 linvel: rng.circle()
                     * rng.value_range(spawn.radial_force.start, spawn.radial_force.end),
-                ..default()
+                angvel: rng.value_range(-10.0, 10.0),
             },
         ));
     }

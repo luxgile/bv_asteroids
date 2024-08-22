@@ -1,7 +1,9 @@
 mod asteroids;
 mod camera;
 mod common;
+mod hittable_button;
 mod player;
+mod prelude;
 mod projectiles;
 mod scenes;
 mod score;
@@ -14,10 +16,11 @@ use bevy::{
         settings::{Backends, RenderCreation, WgpuSettings},
         RenderPlugin,
     },
-    sprite::{MaterialMesh2dBundle, Mesh2dHandle, Wireframe2dPlugin},
+    sprite::Wireframe2dPlugin,
 };
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
+use prelude::*;
 
 fn main() {
     let mut app = App::new();
@@ -35,6 +38,7 @@ fn main() {
         // RapierDebugRenderPlugin::default(),
         WorldInspectorPlugin::new(),
         bevy_tweening::TweeningPlugin,
+        HanabiPlugin,
         common::plugin,
         player::plugin,
         camera::plugin,
