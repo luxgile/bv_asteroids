@@ -89,7 +89,7 @@ fn process_lifetimes(
     for (entity, mut lifetime) in q_lifetimes.iter_mut() {
         lifetime.0.tick(time.delta());
         if lifetime.0.finished() {
-            cmds.entity(entity).despawn();
+            cmds.entity(entity).despawn_recursive();
         }
     }
 }
