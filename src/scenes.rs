@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::prelude::*;
+use crate::{hittable_button::SpawnHittableButtonExt, prelude::*};
 
 pub fn plugin(app: &mut App) {
     app.register_type::<GameStates>();
@@ -43,87 +43,25 @@ fn menu_setup(
     r_assets: Res<AssetServer>,
     mut r_effects: ResMut<Assets<EffectAsset>>,
 ) {
-    let mut gradient = Gradient::new();
-    gradient.add_key(0.0, Vec4::new(1., 1., 1., 1.));
-    gradient.add_key(1.0, Vec4::splat(0.));
+    let play_button = cmds.spawn_hittable_button(
+        &r_assets,
+        &mut r_effects,
+        r_assets.load("ui/play.png"),
+        "Play!".into(),
+    );
+    cmds.entity(play_button)
+        .insert(Name::new("Play!"))
+        .observe(on_play_pressed);
 
-    let writer = ExprWriter::new();
-
-    let init_pos = SetPositionCircleModifier {
-        axis: writer.lit(Vec3::Z).expr(),
-        center: writer.lit(Vec3::ZERO).expr(),
-        radius: writer.lit(100.0).expr(),
-        dimension: ShapeDimension::Surface,
-    };
-
-    let init_vel = SetVelocityCircleModifier {
-        axis: writer.lit(Vec3::Z).expr(),
-        center: writer.lit(Vec3::ZERO).expr(),
-        speed: (writer.lit(300.0)
-            + writer.rand(ValueType::Scalar(ScalarType::Float)) * writer.lit(300.0))
-        .expr(),
-    };
-
-    let size = SetSizeModifier {
-        size: CpuValue::Single(Vec2::ONE * 20.0),
-    };
-
-    let lifetime = writer.lit(0.2).expr(); // literal value "10.0"
-    let init_lifetime = SetAttributeModifier::new(Attribute::LIFETIME, lifetime);
-
-    let mut spawner = Spawner::once(25.0.into(), false);
-    let effect = EffectAsset::new(vec![32768], spawner, writer.finish())
-        .with_name("MyEffect")
-        .init(init_pos)
-        .init(init_vel)
-        .init(init_lifetime)
-        .render(ColorOverLifetimeModifier { gradient })
-        .render(size);
-
-    cmds.spawn((
-        Name::new("Play Button"),
-        StateScoped(GameStates::Menu),
-        ParticleEffectBundle {
-            effect: ParticleEffect::new(r_effects.add(effect)),
-            transform: Transform::from_translation(Vec3::new(0.0, 500.0, 0.0)),
-            ..default()
-        },
-        RigidBody::Dynamic,
-        GravityScale(0.0),
-        Collider::cuboid(120.0, 120.0),
-    ))
-    .observe(on_play_pressed)
-    .with_children(|e| {
-        e.spawn(SpriteBundle {
-            texture: r_assets.load("ui/play.png"),
-            sprite: Sprite {
-                custom_size: Some(Vec2::new(100.0, 100.0)),
-                ..default()
-            },
-            ..default()
-        });
-
-        e.spawn(SpriteBundle {
-            texture: r_assets.load("ui/button_outline.png"),
-            sprite: Sprite {
-                custom_size: Some(Vec2::new(120.0, 120.0)),
-                ..default()
-            },
-            ..default()
-        });
-
-        e.spawn(Text2dBundle {
-            text: Text::from_section(
-                "Play!",
-                TextStyle {
-                    font_size: 80.0,
-                    ..default()
-                },
-            ),
-            transform: Transform::from_xyz(0.0, -140.0, 0.0),
-            ..default()
-        });
-    });
+    let exit_button = cmds.spawn_hittable_button(
+        &r_assets,
+        &mut r_effects,
+        r_assets.load("ui/exit.png"),
+        "Exit".into(),
+    );
+    cmds.entity(exit_button)
+        .insert(Name::new("Play!"))
+        .observe(on_exit_pressed);
 }
 
 fn on_player_death(
@@ -149,4 +87,8 @@ fn on_play_pressed(
     cmds.entity(e_hit.entity())
         .despawn_descendants()
         .insert(Lifetime::new(1.0));
+}
+
+fn on_exit_pressed(e_hit: Trigger<OnHit>, mut app_exit_events: ResMut<Events<bevy::app::AppExit>>) {
+    app_exit_events.send(AppExit::Success);
 }
