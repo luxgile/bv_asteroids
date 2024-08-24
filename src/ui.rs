@@ -1,3 +1,4 @@
+mod hittable_button;
 mod main_menu;
 
 use crate::prelude::*;

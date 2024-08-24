@@ -1,6 +1,7 @@
 use std::time::Duration;
 
-use crate::{hittable_button::SpawnHittableButtonExt, prelude::*};
+
+use crate::prelude::*;
 
 pub fn plugin(app: &mut App) {
     app.register_type::<GameStates>();
@@ -9,7 +10,6 @@ pub fn plugin(app: &mut App) {
 
     app.add_systems(Startup, game_setup);
     app.add_systems(OnEnter(GameStates::Match), match_setup);
-    app.add_systems(OnEnter(GameStates::Menu), menu_setup);
 
     app.observe(on_player_death);
 }
@@ -36,13 +36,6 @@ fn match_setup(mut cmds: Commands) {
             timer: Timer::new(Duration::from_secs_f32(5.0), TimerMode::Repeating),
         },
     ));
-}
-
-fn menu_setup(
-    mut cmds: Commands,
-    r_assets: Res<AssetServer>,
-    mut r_effects: ResMut<Assets<EffectAsset>>,
-) {
 }
 
 fn on_player_death(

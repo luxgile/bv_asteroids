@@ -9,12 +9,13 @@ use bevy::{
 use bevy_rapier2d::prelude::*;
 use bevy_tweening::*;
 use lens::ColorMaterialColorLens;
+use rand::Rng;
 
 use crate::{
     common::*,
     player::KillPlayerOnTouch,
     scenes::GameStates,
-    score::{Money, MoneyDrop, SpawnMoney},
+    score::{MoneyDrop, SpawnMoney},
 };
 
 pub fn plugin(app: &mut App) {
@@ -57,7 +58,7 @@ fn spawn_asteroid(
         KillPlayerOnTouch,
         MaterialMesh2dBundle {
             mesh: Mesh2dHandle(meshes.add(Circle::new(radius))),
-            material: materials.add(Color::from(BROWN)),
+            material: materials.add(Color::from(GREY)),
             transform: Transform::from_translation(spawn.position.extend(0.0)),
             ..default()
         },
@@ -75,6 +76,18 @@ fn spawn_asteroid(
         DestroyOnDeath,
     ));
 }
+fn generate_asteroid_shape(radius: f32) -> Vec<Vec2> {
+    let mut rng = rand::thread_rng();
+    let resolution = 32;
+    let delta = 10.0;
+    let angle_dt = PI / resolution as f32;
+    let mut vertices = Vec::with_capacity(resolution);
+    for i in 0..resolution {
+        let angle = i as f32 * angle_dt;
+        vertices.push(Vec2::from_angle(angle) * (radius + rng.gen_range(-delta..delta)));
+    }
+    vertices
+}
 
 fn on_asteroid_hit(
     e_hit: Trigger<OnHit>,
@@ -90,7 +103,7 @@ fn on_asteroid_hit(
             Duration::from_secs_f32(0.3),
             ColorMaterialColorLens {
                 start: WHITE.into(),
-                end: BROWN.into(),
+                end: GREY.into(),
             },
         );
 
@@ -121,6 +134,14 @@ fn on_asteroid_death(
     if let Ok((mut asteroid, asteroid_xform, asteroid_collider, vel, money_drop)) =
         q_asteroids.get_mut(e_death.entity())
     {
+        if let Some(money) = money_drop {
+            cmds.add(SpawnMoney {
+                money: money.0,
+                position: asteroid_xform.translation().xy(),
+                radial_force: 150.0..300.0,
+            });
+        }
+
         if asteroid.depth > 0 {
             let size = asteroid_collider.as_ball().unwrap().radius();
             let spawn_offset = Vec2::from_angle(PI / 2.0).rotate(vel.linvel.normalize()) * size;
@@ -137,14 +158,6 @@ fn on_asteroid_death(
                 velocity: vel.linvel + spawn_offset.normalize() * 50.0,
                 depth,
             });
-
-            if let Some(money) = money_drop {
-                cmds.add(SpawnMoney {
-                    money: money.0,
-                    position: asteroid_xform.translation().xy(),
-                    radial_force: 150.0..300.0,
-                });
-            }
         }
     }
 }

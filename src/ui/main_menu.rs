@@ -1,7 +1,8 @@
-use crate::{
-    hittable_button::{HittableButton, SpawnHittableButtonExt},
-    prelude::*,
-};
+use std::f32::consts::PI;
+
+use crate::prelude::*;
+
+use super::hittable_button::{HittableButton, SpawnHittableButtonExt};
 
 pub mod prelude {}
 
@@ -40,30 +41,16 @@ fn update_menu_buttons(
     mut cmds: Commands,
     q_player: Query<&GlobalTransform, With<Player>>,
     mut gizmos: Gizmos,
-    mut q_buttons: Query<(Entity, &mut Transform, &HittableButton, &mut Velocity)>,
+    mut q_buttons: Query<(Entity, &mut Transform, &HittableButton)>,
 ) {
     let player = q_player.single();
 
     let button_count = q_buttons.iter().len();
-    let angle_dt = 360.0 / button_count as f32;
-    let force_mult = 100.0;
-    let vel_clamp = 1000.0;
-    for (i, (e, mut xform, button, mut vel)) in q_buttons.iter_mut().enumerate() {
-        let angle = f32::to_radians(angle_dt * i as f32);
-        let target = player.translation().xy() + Vec2::from_angle(angle) * button.distance;
-        let position_difference = target - xform.translation.xy();
-        cmds.entity(e).insert(ExternalForce {
-            force: position_difference * force_mult,
-            ..default()
-        });
-        vel.linvel = vel.linvel.clamp_length(0.0, vel_clamp);
-        xform.look_to(Vec3::Z, Vec3::Y);
-        gizmos.arrow_2d(
-            xform.translation.xy(),
-            xform.translation.xy() + position_difference * force_mult,
-            GREEN,
-        );
-        gizmos.arrow_2d(xform.translation.xy(), target, RED);
+    let angle_dt = f32::to_radians(360.0 / button_count as f32);
+    for (i, (e, mut xform, button)) in q_buttons.iter_mut().enumerate() {
+        let angle = angle_dt * i as f32;
+        let target = player.translation() + Vec2::from_angle(angle).extend(0.0) * button.distance;
+        xform.translation = xform.translation.lerp(target, 0.1);
     }
 }
 
