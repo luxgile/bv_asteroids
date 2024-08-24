@@ -9,6 +9,7 @@ mod scenes;
 mod score;
 mod shooter;
 mod spawner;
+mod ui;
 
 use bevy::{
     prelude::*,
@@ -39,6 +40,8 @@ fn main() {
         WorldInspectorPlugin::new(),
         bevy_tweening::TweeningPlugin,
         HanabiPlugin,
+    ))
+    .add_plugins((
         common::plugin,
         player::plugin,
         camera::plugin,
@@ -48,6 +51,7 @@ fn main() {
         scenes::plugin,
         score::plugin,
         spawner::plugin,
+        ui::plugin,
     ));
     app.run();
 }

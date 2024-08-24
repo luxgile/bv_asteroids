@@ -2,6 +2,11 @@ use bevy::ecs::system::EntityCommands;
 
 use crate::prelude::*;
 
+#[derive(Component, Default)]
+pub struct HittableButton {
+    pub distance: f32,
+}
+
 pub trait SpawnHittableButtonExt {
     fn spawn_hittable_button(
         &mut self,
@@ -57,14 +62,20 @@ impl<'w, 's> SpawnHittableButtonExt for Commands<'w, 's> {
             .render(size);
 
         self.spawn((
+            HittableButton { distance: 500.0 },
             ParticleEffectBundle {
                 effect: ParticleEffect::new(r_effects.add(effect)),
                 transform: Transform::from_translation(Vec3::new(0.0, 500.0, 0.0)),
                 ..default()
             },
-            RigidBody::Dynamic,
-            GravityScale(0.0),
-            Collider::cuboid(120.0, 120.0),
+            PhysicsBundle {
+                rigidbody: RigidBody::Dynamic,
+                gravity: GravityScale(0.0),
+                velocity: Velocity::default(),
+                collider: Collider::cuboid(120.0, 120.0),
+                mass: ColliderMassProperties::Mass(1.0),
+                ..default()
+            },
         ))
         .with_children(|e| {
             e.spawn(SpriteBundle {
